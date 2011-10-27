@@ -1,11 +1,16 @@
 package net.decitrig.galaxy;
 
 import java.awt.geom.Point2D;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /** Represents a single galaxy. */
 public class Galaxy {
+	private static final AtomicInteger nextId = new AtomicInteger(0);
+
+	private final int id;
 	private final int mass;
 
 	private final ReadWriteLock positionLock = new ReentrantReadWriteLock();
@@ -13,6 +18,7 @@ public class Galaxy {
 	private double y;
 
 	public Galaxy(int mass, double x, double y) {
+		this.id = nextId.getAndIncrement();
 		this.mass = mass;
 		this.x = x;
 		this.y = y;
@@ -30,4 +36,17 @@ public class Galaxy {
 	public int getMass() {
 	  return mass;
   }
+
+	@Override
+	public boolean equals(Object obj) {
+	  if (!(obj instanceof Galaxy)) {
+	  	return false;
+	  }
+	  return ((Galaxy) obj).id == this.id;
+	}
+
+	@Override
+	public int hashCode() {
+	  return Objects.hash(id);
+	}
 }
