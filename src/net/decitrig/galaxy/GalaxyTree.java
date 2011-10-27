@@ -1,6 +1,7 @@
 package net.decitrig.galaxy;
 
 import java.util.AbstractCollection;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 
@@ -44,6 +45,16 @@ public class GalaxyTree extends AbstractCollection<Galaxy> {
       }
       return Doubles.compare(a.location().getY(), b.location().getY());
     }
+  }
+
+  @Override
+  public boolean remove(Object o) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean removeAll(Collection<?> c) {
+    throw new UnsupportedOperationException();
   }
 
   private static class LatitudeComparator implements Comparator<Galaxy> {
@@ -104,12 +115,7 @@ public class GalaxyTree extends AbstractCollection<Galaxy> {
     }
 
     public Pair<Node, Boolean> insert(Galaxy galaxy, int level) {
-      int result;
-      if (level % 2 == 0) {
-        result = LongitudeComparator.instance.compare(galaxy, this.galaxy);
-      } else {
-        result = LatitudeComparator.instance.compare(galaxy, this.galaxy);
-      }
+      int result = compare(galaxy, level);
       if (result < 0) {
         Pair<Node, Boolean> pair = left.insert(galaxy, level + 1);
         left = pair.head();
@@ -121,6 +127,16 @@ public class GalaxyTree extends AbstractCollection<Galaxy> {
       } else {
         return Pair.of((Node) this, false);
       }
+    }
+
+    private int compare(Galaxy galaxy, int level) {
+      int result;
+      if (level % 2 == 0) {
+        result = LongitudeComparator.instance.compare(galaxy, this.galaxy);
+      } else {
+        result = LatitudeComparator.instance.compare(galaxy, this.galaxy);
+      }
+      return result;
     }
   }
 }
