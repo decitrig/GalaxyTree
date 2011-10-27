@@ -14,8 +14,7 @@ public class GalaxyTree extends AbstractCollection<Galaxy> {
 
   @Override
   public Iterator<Galaxy> iterator() {
-    // TODO Auto-generated method stub
-    return null;
+    throw new UnsupportedOperationException("not implemented");
   }
 
   @Override
