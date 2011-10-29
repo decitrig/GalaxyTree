@@ -49,4 +49,12 @@ public class Galaxy {
 	public int hashCode() {
 	  return Objects.hash(id);
 	}
+
+	@Override
+	public String toString() {
+		return com.google.common.base.Objects.toStringHelper(this)
+				.add("x", String.format("%.2f", x))
+				.add("y", String.format("%.2f", y))
+				.toString();
+	}
 }

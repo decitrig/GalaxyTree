@@ -1,8 +1,15 @@
 package net.decitrig.galaxy;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Test;
+
+import com.google.common.collect.Lists;
 
 public class GalaxyTreeTest {
 
@@ -10,24 +17,11 @@ public class GalaxyTreeTest {
   private static final Galaxy GALAXY1 = new Galaxy(1, 2.0, 2.0);
 
   @Test
-  public void testAddIncrementsSize() {
-    GalaxyTree tree = new GalaxyTree();
-    assertEquals(0, tree.size());
-    assertTrue(tree.isEmpty());
-    assertTrue(tree.add(GALAXY1));
-    assertEquals(1, tree.size());
-    assertFalse(tree.isEmpty());
-
-    assertTrue(tree.add(GALAXY2));
-    assertEquals(2, tree.size());
-    assertFalse(tree.isEmpty());
-  }
-
-  @Test
-  public void testInsertDuplicate() {
-    GalaxyTree tree = new GalaxyTree();
-    assertTrue(tree.add(GALAXY1));
-    assertFalse(tree.add(new Galaxy(1, 2.0, 2.0)));
-    assertEquals(1, tree.size());
+  public void testTreeCreation() {
+  	Galaxy a = new Galaxy(1, 0, 0);
+  	Galaxy b = new Galaxy(2, 1, 2);
+  	Galaxy c = new Galaxy(1, 0, 3);
+    GalaxyTree tree = new GalaxyTree(Lists.newArrayList(a, b, c));
+    System.out.println(tree.debugString());
   }
 }

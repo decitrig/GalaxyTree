@@ -1,141 +1,233 @@
 package net.decitrig.galaxy;
 
-import java.util.AbstractCollection;
+import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
+import java.util.List;
 
-import net.decitrig.util.Pair;
-
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Lists;
 import com.google.common.primitives.Doubles;
 
-public class GalaxyTree extends AbstractCollection<Galaxy> {
-  private Node root = EmptyNode.instance;
+public class GalaxyTree {
+	private static Comparator<Galaxy> xAxisComparator = new Comparator<Galaxy>() {
+		@Override
+		public int compare(Galaxy a, Galaxy b) {
+			return Doubles.compare(a.location().getX(), b.location().getX());
+		}
+	};
+	private static Comparator<Galaxy> yAxisComparator = new Comparator<Galaxy>() {
+		@Override
+		public int compare(Galaxy a, Galaxy b) {
+			return Doubles.compare(a.location().getY(), b.location().getY());
+		}
+	};
 
-  @Override
-  public Iterator<Galaxy> iterator() {
-    throw new UnsupportedOperationException("not implemented");
+	private static abstract class Node {
+		private static Point2D findMedian(List<Galaxy> sorted) {
+			Preconditions.checkArgument(sorted.size() > 0, "Sorted list must not be empty");
+			if (sorted.size() == 1) {
+				return sorted.get(0).location();
+			}
+			int mid = sorted.size() / 2;
+			if (sorted.size() % 2 == 0) {
+				Point2D high = sorted.get(mid).location();
+				Point2D low = sorted.get(mid - 1).location();
+				double x = (high.getX() + low.getX()) / 2;
+				double y = (high.getY() + low.getY()) / 2;
+				return new Point2D.Double(x, y);
+			} else {
+				return sorted.get(mid).location();
+			}
+		}
+
+		private static Collection<Galaxy>
+		    leftOf(final Point2D median, List<Galaxy> galaxies, int level) {
+			Predicate<Galaxy> predicate;
+			if (level % 2 == 0) {
+				predicate = new Predicate<Galaxy>() {
+					@Override
+					public boolean apply(Galaxy input) {
+					  return input.location().getX() < median.getX();
+					}
+				};
+			} else {
+				predicate = new Predicate<Galaxy>() {
+					@Override
+					public boolean apply(Galaxy input) {
+						return input.location().getY() < median.getY();
+					}
+				};
+			}
+			return Collections2.filter(galaxies, predicate);
+		}
+
+		private static Collection<Galaxy>
+		    rightOf(final Point2D median, List<Galaxy> galaxies, int level) {
+			Predicate<Galaxy> predicate;
+			if (level % 2 == 0) {
+				predicate = new Predicate<Galaxy>() {
+					@Override
+					public boolean apply(Galaxy input) {
+						return input.location().getX() >= median.getX();
+					}
+				};
+			} else {
+				predicate = new Predicate<Galaxy>() {
+					@Override
+					public boolean apply(Galaxy input) {
+						return input.location().getY() >= median.getY();
+					}
+				};
+			}
+			return Collections2.filter(galaxies, predicate);
+		}
+
+		static Node create(Collection<Galaxy> galaxies, int level) {
+			if (galaxies.isEmpty()) {
+				return EmptyClump.instance;
+			}
+			if (galaxies.size() == 1) {
+				return new LeafGalaxy(galaxies.iterator().next());
+			}
+			List<Galaxy> sorted = new ArrayList<Galaxy>(galaxies);
+			if (level % 2 == 0) {
+				Collections.sort(sorted, xAxisComparator);
+			} else {
+				Collections.sort(sorted, yAxisComparator);
+			}
+			Point2D median = findMedian(sorted);
+			double radius = Double.NEGATIVE_INFINITY;
+			for (Galaxy g : sorted) {
+				if (radius < g.location().distance(median)) {
+					radius = g.location().distance(median);
+				}
+			}
+			int mid = sorted.size() / 2;
+			Node left = Node.create(leftOf(median, sorted, level), level + 1);
+			Node right = Node.create(rightOf(median, sorted, level), level + 1);
+			return new Clump(median, radius, left, right);
+		}
+
+		private Clump parent;
+
+		void setParent(Clump parent) {
+			this.parent = parent;
+		}
+
+		public Clump getParent() {
+	    return parent;
+    }
+
+		public abstract String debugString(int level);
+	}
+
+	private static class EmptyClump extends Node {
+		private static final EmptyClump instance = new EmptyClump();
+
+		@Override
+		public String toString() {
+		  return "EmptyClump";
+		}
+
+		@Override
+    public String debugString(int level) {
+	    StringBuilder builder = new StringBuilder();
+	    for (int i = 0; i < level; i++) {
+	    	builder.append("|--");
+	    }
+	    builder.append(toString() + "\n");
+	    return builder.toString();
+    }
+
+	}
+
+	private static class LeafGalaxy extends Node {
+		Galaxy galaxy;
+
+		LeafGalaxy(Galaxy galaxy) {
+			this.galaxy = galaxy;
+		}
+
+		@Override
+		public String toString() {
+			return Objects.toStringHelper(this)
+			              .add("x", String.format("%.2f", galaxy.location().getX()))
+			              .add("y", String.format("%.2f", galaxy.location().getY()))
+			              .toString();
+		}
+
+		@Override
+		public String debugString(int level) {
+			StringBuilder builder = new StringBuilder();
+			for (int i = 0; i < level; i++) {
+				builder.append("|--");
+			}
+			builder.append(toString() + "\n");
+			return builder.toString();
+		}
+	}
+
+	private static class Clump extends Node {
+		Point2D center;
+		double radius;
+		Node left;
+		Node right;
+
+		Clump(Point2D center, double radius, Node left, Node right) {
+			this.center = center;
+			this.radius = radius;
+			this.left = left;
+			this.right = right;
+			if (left != null) {
+				left.setParent(this);
+			}
+			if (right != null) {
+				right.setParent(this);
+			}
+		}
+
+		@Override
+		public String toString() {
+			return Objects.toStringHelper(this)
+			              .add("x", String.format("%.2f", center.getX()))
+			              .add("y", String.format("%.2f", center.getY()))
+			              .add("radius", String.format("%.2f", radius))
+			              .toString();
+		}
+
+	  public String debugString(int level) {
+	  	StringBuilder builder = new StringBuilder();
+	  	for (int i = 0; i < level; i++) {
+	  		builder.append("|--");
+	  	}
+	  	builder.append(toString() + "\n");
+	  	builder.append(left == null ? "null\n" : left.debugString(level + 1));
+	  	builder.append(right == null ? "null\n" : right.debugString(level + 1));
+	  	return builder.toString();
+	  }
+	}
+
+  private Node root;
+
+  public GalaxyTree(List<Galaxy> galaxies) {
+  	root = Node.create(galaxies, 0);
   }
 
-  @Override
   public int size() {
-    return root.size();
+  	return -1;
   }
 
-  @Override
   public boolean isEmpty() {
-    return root.isEmpty();
+  	return false;
   }
 
-  @Override
-  public boolean add(Galaxy galaxy) {
-    Pair<Node, Boolean> pair = root.insert(galaxy, 0);
-    root = pair.head();
-    return pair.tail();
-  }
-
-  private static class LongitudeComparator implements Comparator<Galaxy> {
-    static final LongitudeComparator instance = new LongitudeComparator();
-    @Override
-    public int compare(Galaxy a, Galaxy b) {
-      int result = Doubles.compare(a.location().getX(), b.location().getX());
-      if (result != 0) {
-        return result;
-      }
-      return Doubles.compare(a.location().getY(), b.location().getY());
-    }
-  }
-
-  @Override
-  public boolean remove(Object o) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean removeAll(Collection<?> c) {
-    throw new UnsupportedOperationException();
-  }
-
-  private static class LatitudeComparator implements Comparator<Galaxy> {
-    static final LatitudeComparator instance = new LatitudeComparator();
-    @Override
-    public int compare(Galaxy a, Galaxy b) {
-      int result = Doubles.compare(a.location().getY(), b.location().getY());
-      if (result != 0) {
-        return result;
-      }
-      return Doubles.compare(a.location().getX(), b.location().getX());
-    }
-  }
-
-  private interface Node {
-    int size();
-    boolean isEmpty();
-    Pair<Node, Boolean> insert(Galaxy g, int level);
-  }
-
-  private static class EmptyNode implements Node {
-    static final EmptyNode instance = new EmptyNode();
-
-    @Override
-    public int size() {
-      return 0;
-    }
-
-    @Override
-    public boolean isEmpty() {
-      return true;
-    }
-
-    @Override
-    public Pair<Node, Boolean> insert(Galaxy g, int level) {
-      Node n = new GalaxyNode(g);
-      return Pair.of(n, true);
-    }
-  }
-
-  private static class GalaxyNode implements Node {
-    private final Galaxy galaxy;
-
-    private Node left = EmptyNode.instance;
-    private Node right = EmptyNode.instance;
-
-    GalaxyNode(Galaxy galaxy) {
-      this.galaxy = galaxy;
-    }
-
-    public int size() {
-      return 1 + left.size() + right.size();
-    }
-
-    @Override
-    public boolean isEmpty() {
-      return false;
-    }
-
-    public Pair<Node, Boolean> insert(Galaxy galaxy, int level) {
-      int result = compare(galaxy, level);
-      if (result < 0) {
-        Pair<Node, Boolean> pair = left.insert(galaxy, level + 1);
-        left = pair.head();
-        return Pair.of((Node) this, pair.tail());
-      } else if (result > 0) {
-        Pair<Node, Boolean> pair = right.insert(galaxy, level + 1);
-        right = pair.head();
-        return Pair.of((Node) this, pair.tail());
-      } else {
-        return Pair.of((Node) this, false);
-      }
-    }
-
-    private int compare(Galaxy galaxy, int level) {
-      int result;
-      if (level % 2 == 0) {
-        result = LongitudeComparator.instance.compare(galaxy, this.galaxy);
-      } else {
-        result = LatitudeComparator.instance.compare(galaxy, this.galaxy);
-      }
-      return result;
-    }
+  public String debugString() {
+  	return root.debugString(0);
   }
 }
