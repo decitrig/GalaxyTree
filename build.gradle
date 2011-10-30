@@ -22,6 +22,7 @@ sourceSets {
 }
 
 dependencies {
-    compile group: 'com.google.guava', name: 'guava', version: '10.0.1'
-    testCompile group: 'junit', name: 'junit', version: '4.+'
+    compile 'com.google.guava:guava:10.0.1'
+    compile 'org.apache.commons:commons-math:2.2'
+    testCompile 'junit:junit:4.+'
 }
