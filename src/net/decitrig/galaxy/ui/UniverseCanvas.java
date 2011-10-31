@@ -9,6 +9,7 @@ import java.awt.geom.Point2D;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import net.decitrig.galaxy.Particle;
 import net.decitrig.galaxy.Universe;
@@ -41,7 +42,7 @@ public class UniverseCanvas {
       for (Particle p : universe.particles()) {
         Vector3D position = p.position();
         Point2D center = new Point2D.Double(position.getX(), position.getY());
-        g2.draw(dot(center, 10));
+        g2.fill(dot(center, 10));
       }
     }
   }
@@ -55,5 +56,14 @@ public class UniverseCanvas {
 
   public JComponent getComponent() {
     return canvas;
+  }
+
+  public void scheduleRepaint() {
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        canvas.repaint();
+      }
+    });
   }
 }
