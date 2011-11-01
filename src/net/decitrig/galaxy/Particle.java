@@ -4,8 +4,8 @@ import org.apache.commons.math.geometry.Vector3D;
 
 public class Particle {
 	private Vector3D position;
-	private Vector3D acceleration;
 	private Vector3D velocity;
+	private Vector3D netForce = Vector3D.ZERO;
 	private final double mass;
 
 	public static Vector3D barycenter(Iterable<Particle> particles) {
@@ -18,60 +18,48 @@ public class Particle {
 		return new Vector3D(1/totalMass, barycenter);
 	}
 
-	public static class Builder {
-		private final Vector3D position;
-		private Vector3D acceleration;
-		private Vector3D velocity;
-		private final double mass;
-
-		public Builder(Vector3D position, double mass) {
-			this.position = position;
-			this.mass = mass;
+	public static Vector3D geometricCenter(Iterable<Particle> particles) {
+		double n = 0;
+		Vector3D sumVector = Vector3D.ZERO;
+		for (Particle p : particles) {
+			sumVector = sumVector.add(p.position);
+			n += 1.0;
 		}
-
-		public Builder withVelocity(Vector3D velocity) {
-			this.velocity = velocity;
-			return this;
-		}
-
-		public Builder withAcceleration(Vector3D acceleration) {
-			this.acceleration = acceleration;
-			return this;
-		}
-
-		public Particle build() {
-			return new Particle(this);
-		}
+		return new Vector3D(1/n, sumVector);
 	}
 
-	private Particle(Builder builder) {
-		this.position = builder.position;
-		this.velocity = builder.velocity;
-		this.acceleration = builder.acceleration;
-		this.mass = builder.mass;
+	public Particle(double mass, Vector3D position) {
+		this(mass, position, Vector3D.ZERO);
+	}
+
+	public Particle(double mass, Vector3D position, Vector3D velocity) {
+		this.position = position;
+		this.velocity = velocity;
+		this.mass = mass;
 	}
 
 	public Vector3D position() {
   	return position;
   }
 
-	public Vector3D acceleration() {
-  	return acceleration;
-  }
-
 	public Vector3D velocity() {
   	return velocity;
   }
+
+	public Vector3D netForce() {
+		return netForce;
+	}
 
 	public double mass() {
 		return mass;
 	}
 
 	public void applyForce(Vector3D force) {
-		acceleration = acceleration.add(1/mass, force);
+		netForce = netForce.add(force);
 	}
 
 	public void update(double timeDelta) {
+		Vector3D acceleration = new Vector3D(1/mass, netForce);
 		velocity = velocity.add(timeDelta, acceleration);
 		position = position.add(timeDelta, velocity);
 	}
