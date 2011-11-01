@@ -1,9 +1,11 @@
-package net.decitrig.galaxy;
+package net.decitrig.universe.octree;
 
 import org.apache.commons.math.geometry.Vector3D;
 
 import com.google.common.base.Objects;
+import com.google.common.primitives.Doubles;
 
+/** Represents a 3-dimensional box in space, where all sides are equal in length. */
 public class Box {
   public enum Octant {
     TOP_NE(new Vector3D(1, 1, 1)),
@@ -39,6 +41,44 @@ public class Box {
 
   public Box getOctantBox(Box.Octant oct) {
     return new Box(origin.add(size / 2, oct.unit()), size / 2);
+  }
+
+  public Octant octantOf(Vector3D vector) {
+    Vector3D center = origin.add(size / 2, new Vector3D(1, 1, 1));
+    int xResult = Doubles.compare(vector.getX(), center.getX());
+    int yResult = Doubles.compare(vector.getY(), center.getY());
+    int zResult = Doubles.compare(vector.getZ(), center.getZ());
+    if (zResult < 0) {
+      // bottom
+      if (xResult < 0)  {
+        // bottom west
+        if (yResult < 0) {
+          return Octant.BOTTOM_SW;
+        }
+        return Octant.BOTTOM_NW;
+      } else {
+        // bottom east
+        if (yResult < 0) {
+          return Octant.BOTTOM_SE;
+        }
+        return Octant.BOTTOM_NE;
+      }
+    } else {
+      // top
+      if (xResult < 0)  {
+        // top west
+        if (yResult < 0) {
+          return Octant.TOP_SW;
+        }
+        return Octant.TOP_NW;
+      } else {
+        // top east
+        if (yResult < 0) {
+          return Octant.TOP_SE;
+        }
+        return Octant.TOP_NE;
+      }
+    }
   }
 
   public Vector3D getOrigin() {
