@@ -8,15 +8,15 @@ public class Particle {
 	private Vector3D netForce = Vector3D.ZERO;
 	private final double mass;
 
-	public static Vector3D barycenter(Iterable<Particle> particles) {
-		Vector3D barycenter = Vector3D.ZERO;
-		double totalMass = 0.0;
-		for (Particle p : particles) {
-			barycenter = barycenter.add(p.mass(), p.position());
-			totalMass += p.mass();
-		}
-		return new Vector3D(1/totalMass, barycenter);
-	}
+  public static Vector3D barycenter(Iterable<Particle> particles) {
+    Vector3D barycenter = Vector3D.ZERO;
+    double totalMass = 0.0;
+    for (Particle p : particles) {
+      barycenter = barycenter.add(p.mass(), p.position());
+      totalMass += p.mass();
+    }
+    return new Vector3D(1/totalMass, barycenter);
+  }
 
 	public static Vector3D geometricCenter(Iterable<Particle> particles) {
 		double n = 0;
@@ -38,8 +38,8 @@ public class Particle {
 		this.mass = mass;
 	}
 
-	public Vector3D position() {
-  	return position;
+  public Vector3D position() {
+    return position;
   }
 
 	public Vector3D velocity() {
