@@ -1,4 +1,4 @@
-package net.decitrig.galaxy;
+package net.decitrig;
 
 import org.apache.commons.math.geometry.Vector3D;
 

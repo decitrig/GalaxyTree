@@ -1,7 +1,7 @@
-package net.decitrig.galaxy;
+package net.decitrig.universe.octree;
 
 import static org.junit.Assert.assertEquals;
-import net.decitrig.universe.octree.Box;
+import net.decitrig.TestUtil;
 import net.decitrig.universe.octree.Box.Octant;
 
 import org.junit.Test;
